@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "##ingressClass##"
+    kubernetes.io/ingress.rule-mix: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/service-weight: ""
+#    nginx.ingress.kubernetes.io/cors-allow-headers: "x-client,content-type,x-deviceId"
+#    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,OPITONS,PUT,DELETE,POST"
+#    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+#    nginx.ingress.kubernetes.io/cors-max-age: "1800"
+#    nginx.ingress.kubernetes.io/enable-cors: "true"
+#    nginx.ingress.kubernetes.io/rewrite-target: /$2
+#    nginx.ingress.kubernetes.io/x-forwarded-prefix: "##appDomainPathHttp##,##appDomainPathJrpc##"
+#    nginx.ingress.kubernetes.io/configuration-snippet: |
+#      more_set_headers "x-service: ##appName##@##appVersion##";
+  name: ##appName##
+  namespace: ##appNamespace##
+spec:
+  rules:
+    - host: ##appDomainName##
+      http:
+        paths:
+          - path: ##appDomainPathHttp##(/|$)(.*)
+            backend:
+              serviceName: ##appName##
+              servicePort: ##appPortHttp##
+          - path: ##appDomainPathJrpc##(/|$)(.*)
+            backend:
+              serviceName: ##appName##
+              servicePort: ##appPortJrpc##
+  tls:
+    - hosts:
+        - ##appDomainName##
+      secretName: ##appDomainNameSSL##

@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: ##appNamespace##
+  name:  ##appName##
+  labels:
+    app: ##appName##
+spec:
+  type: ClusterIP  # k8s默认 service 类型为 ClusterIP
+  selector:
+    app: ##appName##
+  ports:
+    - name: http
+      protocol: TCP
+      port: ##appPortHttp##
+    - name: tcp
+      protocol: TCP
+      port: ##appPortTcp##
+

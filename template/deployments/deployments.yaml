@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ##appNamespace##
+  name: ##appName##
+  labels:
+    app: ##appName##
+spec:
+  replicas: ##replicasNum##
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 10
+  #minReadySeconds: 300   # 滚动升级时300s后认为该pod就绪
+  strategy:
+    type: RollingUpdate   # 滚动更新
+    rollingUpdate:
+      maxSurge: 25%       # 一次可以添加多少个Pod
+      maxUnavailable: 25% # 滚动更新期间最大多少个Pod不可用
+  selector:
+    matchLabels:
+      app: ##appName##
+  template:
+    metadata:
+      labels:
+        app: ##appName##
+        appEnv: ##appEnv##
+        appName: ##appName##
+        appVersion: ##appVersion##
+        appBuildDate: ##appBuildDate##
+        appBuildDateTime: ##appBuildDateTimeCustom##
+        appBuildTimestamp: "##appBuildTimestamp##"
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: ##app.key##
+                    operator: In
+                    values:
+                      - ##appNamespace##
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - ##appName##
+                topologyKey: kubernetes.io/hostname
+      imagePullSecrets:
+      - name: inits
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30 # k8s将会给应用发送SIGTERM信号，可以用来正确、优雅地关闭应用,默认为30秒
+
+      # 初始化容器
+      initContainers:
+        - name: ##appName##-migrate
+          image: ##appContainerImage##
+          imagePullPolicy: Always
+          command: ["##command##"]
+          volumeMounts:
+            - mountPath: ##appMountPath##
+              name: ##appMountName##
+              readOnly: true
+            - mountPath: ##appConfigMapPath##
+              name: ##appConfigMapName##
+              readOnly: true
+
+      # 应用容器
+      containers:
+        - name: ##appName##
+          image: ##appContainerImage##
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: ##appPortHttp##
+              protocol: TCP
+            - name: jrpc
+              containerPort: ##appPortJrpc##
+              protocol: TCP
+          resources:
+            limits:
+              cpu: ##limitCpu##
+              memory: ##limitMemory##
+            requests:
+              cpu: ##requestCpu##
+              memory: ##requestCpu##
+
+          # 就绪检查
+          readinessProbe:
+            httpGet:
+              scheme: HTTP             # 协议
+              path: /                  # 路径
+              port: ##appPortHttp##    # 端口
+            initialDelaySeconds: 5     # 延迟探测时间(秒)【 在k8s第一次探测前等待秒 】
+            periodSeconds: 2           # 执行探测频率(秒) 【 每隔秒执行一次 】
+            timeoutSeconds: 1          # 超时时间
+            successThreshold: 1        # 健康阀值
+            failureThreshold: 3        # 不健康阀值
+
+          # 存活检查
+          livenessProbe:
+            httpGet:
+              scheme: HTTP             # 协议
+              path: /                  # 路径
+              port: ##appPortHttp##    # 端口
+            initialDelaySeconds: 10    # 延迟探测时间(秒) 【 在k8s第一次探测前等待秒 】
+            periodSeconds: 10          # 执行探测频率(秒) 【 每隔秒执行一次 】
+            timeoutSeconds: 1          # 超时时间
+            successThreshold: 1        # 健康阀值
+            failureThreshold: 3        # 不健康阀值
+          env:
+            - name: ##appEnvName##
+              value: ##appEnvArchitecture##
+          volumeMounts:
+            - mountPath: ##appMountPath##
+              name: ##appMountName##
+              readOnly: true
+            - mountPath: ##appConfigMapPath##
+              name: ##appConfigMapName##
+              readOnly: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      volumes:
+        - name: ##appMountName##
+          hostPath:
+            path: ##localPath##
+        - name: ##appConfigMapName##
+          configMap:
+            defaultMode: 420
+            name: ##appConfigMapName##
+
+
+

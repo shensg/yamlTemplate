@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: k8s-sigs.io/nfs-subdir-external-provisioner  # provisionerName 可以参考StorageClass那边的内容
+  finalizers:
+  - kubernetes.io/pv-protection
+  name: ##pvName##
+spec:
+  accessModes:
+  - ReadWriteOnce # 磁盘的操作策略
+  capacity:
+    storage: 10Gi # 所需磁盘空间大小
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: ##pvcName##
+    namespace: ##pvcNamespace##
+  nfs:
+    path: /pvdata   # 在nfs上创建一个新目录
+    server: 172.31.6.88 # nfs地址
+  persistentVolumeReclaimPolicy: Retain # 使用磁盘的策略
+  storageClassName: nfs-default   # storageClassName
+  volumeMode: Filesystem

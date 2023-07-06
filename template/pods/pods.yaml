@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: ##appName##
+  name: ##appName##
+  namespace: ##appNamespace##
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: ##app.key##
+                operator: In
+                values:
+                  - ##appNamespace##
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - ##appName##
+            topologyKey: kubernetes.io/hostname
+  # 初始化容器
+  initContainers:
+    - name: ##appName##-migrate
+      image: ##appContainerImage##
+      imagePullPolicy: Always
+      command: ["##command##"]
+      volumeMounts:
+        - mountPath: ##appMountPath##
+          name: ##appMountName##
+          readOnly: true
+        - mountPath: ##appConfigMapPath##
+          name: ##appConfigMapName##
+          readOnly: true
+  containers:
+  - args:
+    - ##params##
+    command:
+    - ##command##
+    env:
+    - name: HOSTNAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    image: ##PodImage##
+    imagePullPolicy: IfNotPresent
+    name: nsqd
+    ports:
+    - containerPort: 80
+      name: tcp
+      protocol: TCP
+    - containerPort: 8080
+      name: http
+      protocol: TCP
+    # 就绪检查
+    readinessProbe:
+      httpGet:
+        scheme: HTTP             # 协议
+        path: /                  # 路径
+        port: ##appPortHttp##    # 端口
+      initialDelaySeconds: 5     # 延迟探测时间(秒)【 在k8s第一次探测前等待秒 】
+      periodSeconds: 2           # 执行探测频率(秒) 【 每隔秒执行一次 】
+      timeoutSeconds: 1          # 超时时间
+      successThreshold: 1        # 健康阀值
+      failureThreshold: 3        # 不健康阀值
+    # 存活检查
+    livenessProbe:
+      httpGet:
+        scheme: HTTP             # 协议
+        path: /                  # 路径
+        port: ##appPortHttp##    # 端口
+      initialDelaySeconds: 10    # 延迟探测时间(秒) 【 在k8s第一次探测前等待秒 】
+      periodSeconds: 10          # 执行探测频率(秒) 【 每隔秒执行一次 】
+      timeoutSeconds: 1          # 超时时间
+      successThreshold: 1        # 健康阀值
+      failureThreshold: 3        # 不健康阀值
+    resources:
+      limits:
+        cpu: ##limitCpu##
+        memory: ##limitMemory##
+      requests:
+        cpu: ##requestCpu##
+        memory: ##requestCpu##
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeMounts:
+      - mountPath: ##appMountPath##
+        name: ##appMountName##
+  dnsPolicy: ClusterFirst
+  hostname: ##appName##
+  imagePullSecrets:
+  - name: ##harborAuth##
+  nodeName: node1   # 指定节点
+  securityContext: {}
+  terminationGracePeriodSeconds: 30
+
+  # 容忍
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - emptyDir: {}
+    name: ##appMountName##

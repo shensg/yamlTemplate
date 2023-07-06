@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    pv.kubernetes.io/bind-completed: "yes"
+    pv.kubernetes.io/bound-by-controller: "yes"
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    app: ##pvcName##
+  name: ##pvcName##
+  namespace: ##pvcNamespace##
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi  # 所需磁盘空间大小
+  storageClassName: nfs-default # storageClassName
+  volumeMode: Filesystem
+  volumeName: ##pvName##

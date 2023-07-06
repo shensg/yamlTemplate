@@ -1,0 +1,25 @@
+# Storage class 有一个分配器（provisioner），用来决定使用哪个卷插件分配 PV，该字段必须指定。
+# 可以指定内部分配器，也可以指定外部分配器。外部分配器的代码地址为： kubernetes-incubator/external-storage，其中包括NFS和Ceph等。
+# kubernetes-incubator/external-storage: https://github.com/kubernetes-sigs/sig-storage-lib-external-provisioner
+kind: StorageClass
+apiVersion: storage.k8s.io/v3
+metadata:
+  name: standard
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+reclaimPolicy: Retain
+mountOptions:
+  - debug
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: example-nfs
+provisioner: example.com/external-nfs
+parameters:
+  server: ##nfsServer##
+  path: ##nfsPath##
+  readOnly: "false"
+

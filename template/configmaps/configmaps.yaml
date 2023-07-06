@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ##ConfigName##
+  namespace: ##ConfigNamespace##
+  labels:
+    app: ##ConfigName##
+data:
+  # file.txt 就是挂载到pod上的文件名了，单文件挂载时可更改文件名
+  file.txt: |-
+    This is configmap data
+
+---
+# 一个configMap支持存储多个文件数据
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ##ConfigName##
+  namespace: ##ConfigNamespace##
+  labels:
+    app: ##ConfigName##
+data:
+  # file1.txt 就是挂载到pod上的文件名了，多文件挂载时不可更改文件名
+  file1.txt: |-
+    This is configmap data1
+  file2.txt: |-
+    This is configmap data2
+  file3.txt: |-
+    This is configmap data3

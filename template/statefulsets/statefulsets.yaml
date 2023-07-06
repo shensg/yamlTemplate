@@ -117,10 +117,11 @@ spec:
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30
-      # 数据不持久化挂载
       volumes:
+      # 数据不持久化
       - emptyDir: {}
         name: ##appMountName##
+      # 数据久化
       - name: ##appMountName##
         persistentVolumeClaim:
           claimName: ##pvcName##

@@ -1,0 +1,25 @@
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ##hpaName##
+  namespace: ##namespace##
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: ##Workload##
+    name: ##appName##
+  minReplicas: 0    # 自动升缩最小pod数
+  maxReplicas: 10   # 自动升缩最大pod数
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu    # cpu阀值
+      target:
+        type: Utilization
+        averageUtilization: 50   # %比
+  - type: Resource
+    resource:
+      name: memory # memory阀值
+      target:
+        type: Utilization
+        averageUtilization: 80   # %比
